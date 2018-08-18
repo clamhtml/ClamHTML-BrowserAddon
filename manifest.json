@@ -1,0 +1,27 @@
+{
+
+  "manifest_version": 2,
+  "name": "ClamAV HTML",
+  "version": "1.0",
+
+  "description": "Interface for ClamAV HTML IPS",
+
+  "icons": {
+    "48": "icons/clamavhtml-48.png"
+  },
+
+  "applications": {
+    "gecko": {
+      "id": "clamavhtml@example.com"
+    }
+  },
+
+  "permissions": [
+    "webRequest", "webRequestBlocking", "*://*/*"
+  ],
+
+  "background": {
+    "scripts": ["clamavhtml.js"]
+  }
+
+}
