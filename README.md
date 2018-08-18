@@ -1,6 +1,8 @@
 # ClamHTML-BrowserAddon
 ClamHTML - Browser Addon - part 2 of 2 
 <br />
+For now this is in alpha testing - Linux with firefox browser - will expand to more environments as project advances<br />
+<br />
 ClamHTML is an application that provides scanning of web resources using free an open source softwares, providing a safer web browsing experience.<br />
 <br />
 The Browser Addon is the second part of this 2 part system. It is a browser addon that redirects your internet traffic before it's rendered by your browser. It sends all those bytes over to the Loopback Server to get processed by the ClamAV antivirus engine. It waits for a result and then decides if it should procede or block the web resource.<br />
