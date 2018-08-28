@@ -177,10 +177,16 @@ function listener(details) {
     let filter = browser.webRequest.filterResponseData(details.requestId);
     let decoder = new TextDecoder("utf-8");
     let encoder = new TextEncoder();
-
+    let str = "";
+      
     filter.ondata = async event => {
-      let str = decoder.decode(event.data, {stream: true});
-      const rslt = await fetch('http://127.0.0.1:8080/', {
+      str += decoder.decode(event.data, {stream: true});
+    };
+
+    filter.onstop = async event => {
+      let rslt;
+      if(encstr != "")
+        rslt = await fetch('http://127.0.0.1:8080/', {
         headers: {
           'Accept': 'text/plain',
           'Content-Type': 'text/plain'
@@ -194,8 +200,9 @@ function listener(details) {
         return err;
       });
 
+      console.log(encoder.encode(encstr));
       if(rslt == "stream: OK\0"){
-        filter.write(encoder.encode(str)); //event.data);
+        filter.write(encoder.encode(str));
       }else if(rslt == "TypeError: NetworkError when attempting to fetch resource."){
         let str2 = blocked.replace(/\{PageUrl\}/g, details.url);
         str2 = str2.replace(/\{VirusName\}/g, "No connection to ClamHTML Server.");
