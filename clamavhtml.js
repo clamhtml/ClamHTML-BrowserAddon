@@ -171,59 +171,56 @@ var blocked = '<!DOCTYPE html>\
 \
 </html>';
 
+function cat(a, b){
+    var c = new (a.constructor)(a.length + b.length);
+    c.set(a, 0);
+    c.set(b, a.length);
+    return c;
+}
 
-function listener(details) {
-  if( !(/^https?:\/\/127\.0\.0\.1:8080\//.test(details.url)) ){
+browser.webRequest.onBeforeRequest.addListener(
+  function (details) {
+    if( /^https?:\/\/127\.0\.0\.1:8080\//.test(details.url) || /^moz-extension:\/\//.test(details.documentUrl) )
+      return {cancel: false};
+
     let filter = browser.webRequest.filterResponseData(details.requestId);
-    let decoder = new TextDecoder("utf-8");
     let encoder = new TextEncoder();
-    let str = "";
-      
+    let encstr = new Uint8Array();
+
     filter.ondata = async event => {
-      str += decoder.decode(event.data, {stream: true});
+      encstr = cat(encstr, new Uint8Array(event.data));
     };
-
+    
     filter.onstop = async event => {
-      let rslt;
-      if(encstr != "")
+      let rslt = "";
+      if(encstr.length != 0)
         rslt = await fetch('http://127.0.0.1:8080/', {
-        headers: {
-          'Accept': 'text/plain',
-          'Content-Type': 'text/plain'
-        },
-        method: "POST",
-        body: str
-      }).then(res => {
-        return res.text();
-      }).catch((err) => {
-        console.log(err);
-        return err;
-      });
+          headers: {
+            'Accept': 'application/octet-stream',
+            'Content-Type': 'application/octet-stream'
+          },
+          method: "POST",
+          body: encstr
+        }).then(res => {
+          return res.text();
+        }).catch((err) => {
+          console.log(err);
+          return err;
+        });
+      else
+        rslt = "stream: EMPTY\0";
 
-      console.log(encoder.encode(encstr));
       if(rslt == "stream: OK\0"){
-        filter.write(encoder.encode(str));
-      }else if(rslt == "TypeError: NetworkError when attempting to fetch resource."){
-        let str2 = blocked.replace(/\{PageUrl\}/g, details.url);
-        str2 = str2.replace(/\{VirusName\}/g, "No connection to ClamHTML Server.");
-        filter.write(encoder.encode(str2));
+        filter.write(encstr);
       }else{
-        let str2 = blocked.replace(/\{PageUrl\}/g, details.url);
-        str2 = str2.replace(/\{VirusName\}/g, rslt);
-        filter.write(encoder.encode(str2));
+        let str = blocked.replace(/\{PageUrl\}/g, details.url);
+        str = str.replace(/\{VirusName\}/g, rslt);
+        filter.write(encoder.encode(str));
       }
       filter.disconnect();
     }
     return {};
-  }else{
-    return {cancel: false};
-  }
-}
-
-browser.webRequest.onBeforeRequest.addListener(
-  listener,
+  },
   {urls: ["<all_urls>"]},
-  ["blocking"]
+  ["blocking", "requestBody"]
 );
-
-
